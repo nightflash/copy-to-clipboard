@@ -10,9 +10,10 @@ function format(message) {
 }
 
 function copy(text, options) {
-  var debug, message, reselectPrevious, range, selection, mark, success = false;
+  var debug, promtFallback, message, reselectPrevious, range, selection, mark, success = false;
   if (!options) { options = {}; }
   debug = options.debug || false;
+  promtFallback = options.promtFallback || false;
   try {
     reselectPrevious = deselectCurrent();
 
@@ -51,13 +52,14 @@ function copy(text, options) {
     debug && console.error('unable to copy using execCommand: ', err);
     debug && console.warn('trying IE specific stuff');
     try {
-      window.clipboardData.setData('text', text);
-      success = true;
+      success = window.clipboardData.setData('text', text);
     } catch (err) {
       debug && console.error('unable to copy using clipboardData: ', err);
-      debug && console.error('falling back to prompt');
-      message = format('message' in options ? options.message : defaultMessage);
-      window.prompt(message, text);
+      if (promtFallback) {
+        debug && console.error('falling back to prompt');
+        message = format('message' in options ? options.message : defaultMessage);
+        success = !!window.prompt(message, text);
+      }
     }
   } finally {
     if (selection) {
